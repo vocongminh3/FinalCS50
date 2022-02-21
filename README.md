@@ -5,8 +5,8 @@
 2. With notebook add keyword you can add keyword , url and type of app or website 
 3. With notebook list you can see all keywords and urls
 4. With keyboard Ctrl + q you can say keyword and open app or website ( but not working well )
-**Important**: 
+_**Important**: 
 1. You can use multiple urls for one keyword for best results.
 2. You can not open app with name more 2 words.
-**NOTE**:
+_**NOTE**:
 - In folder /app have a file exe for this app.

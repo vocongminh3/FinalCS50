@@ -1,0 +1,254 @@
+import speech_recognition
+import pyttsx3
+from tkinter import *
+from tkinter.ttk import *
+from tkinter.messagebox import showinfo
+import webbrowser
+import os
+import csv
+
+# import csv
+data = []
+with open('data.csv') as csv_file:
+    csv_reader = csv.reader(csv_file, delimiter=',')
+    for row in csv_reader:
+        data.append(row)
+window = Tk()
+window.title('App')  # Set a title
+
+# This code helps to disable windows from resizing
+window.resizable(False, False)
+
+window_height = 300
+window_width = 450
+
+screen_width = window.winfo_screenwidth()
+screen_height = window.winfo_screenheight()
+
+x_cordinate = int((screen_width/2) - (window_width/2))
+y_cordinate = int((screen_height/2) - (window_height/2) - 100)
+
+window.geometry("{}x{}+{}+{}".format(window_width,
+                                     window_height, x_cordinate, y_cordinate))
+
+# create a notebook
+notebook = Notebook(window)
+notebook.pack(pady=10, expand=True)
+
+# create frames
+frame0 = Frame(notebook, width=400, height=280)
+frame1 = Frame(notebook, width=400, height=280)
+frame2 = Frame(notebook, width=400, height=280)
+frame0.pack(fill='both', expand=True)
+frame1.pack(fill='both', expand=True)
+frame2.pack(fill='both', expand=True)
+
+# add frames to notebook
+notebook.add(frame0, text='Search')
+notebook.add(frame1, text='Add Keyword')
+notebook.add(frame2, text='List')
+
+# frame0
+# create a label
+label_search = Label(frame0, text="Search").place(x=40,
+                                                  y=60)
+# create a label
+label_talk = Label(frame0, text="Ctrl + q to talk", font=("Helvetica", 11)).place(x=5,
+                                                                                  y=200)
+# create a entry
+search_text = StringVar()
+search = Entry(frame0,
+               width=30, textvariable=search_text)
+search.focus()
+search.place(x=110,
+             y=60)
+# create a button
+
+
+def search(event=None):
+    if search_text.get() == "":
+        showinfo("Error", "Please fill in the search field")
+    else:
+        check = 0
+        search = search_text.get().lower()
+        for i in data:
+            if i[0] == search and i[2] == '1':
+                webbrowser.open(i[1])
+                search_text.set("")
+                check = 1
+            if i[0] == search and i[2] == '2':
+                nameApp = "start {}:".format(i[1])
+                os.system(nameApp)
+                search_text.set("")
+                check = 1
+        if check == 0:
+            showinfo("Error", "No result found")
+            search_text.set("")
+
+
+text = Text(window, height=1, width=25)
+text.place(x=5,
+           y=260)
+#text['state'] = 'disabled'
+text.insert('1.0', 'Welcome to the app')
+
+search_button = Button(frame0,
+                       text="Search", command=search)
+search_button.bind("<Return>", search)
+search_button.place(x=150, y=120)
+# frame1
+# the label for keyword
+label_keyword = Label(frame1,
+                      text="Keyword").place(x=40,
+                                            y=60)
+# the label for url
+
+label_url = Label(frame1,
+                  text='URL | Name').place(x=40,
+                                           y=100)
+# the label for type
+label_type = Label(frame1,
+                   text="Type").place(x=40,
+                                      y=140)
+
+keyword_text = StringVar()
+keyword = Entry(frame1,
+                width=30, textvariable=keyword_text).place(x=110,
+                                                           y=60)
+url_text = StringVar()
+url = Entry(frame1,
+            width=30, textvariable=url_text).place(x=110,
+                                                   y=100)
+
+# the radio button for type
+type_text = StringVar()
+Type = Radiobutton(frame1, text="Web", variable=type_text,
+                   value=1).place(x=110, y=140)
+Type = Radiobutton(frame1, text="App", variable=type_text,
+                   value=2).place(x=180, y=140)
+
+
+def submit(event=None):
+    # print(type_text.get(), keyword_text.get(), url_text.get())
+    if (keyword_text.get() == "" or url_text.get() == "" or type_text.get() == ""):
+        showinfo("Error", "Please fill in all the fields")
+    else:
+        # add the data to the list
+        data.append([keyword_text.get(), url_text.get(), type_text.get()])
+        url_text.set("")
+        type_text.set("")
+    insertDataToTree(data)
+
+
+# the button for submit
+submit_button = Button(frame1,
+                       text="Submit", command=submit)
+
+submit_button.bind("<Return>", submit)
+submit_button.place(x=110, y=180)
+# fame 2
+# define columns
+columns = ('keyword', 'url', 'Type')
+
+tree = Treeview(frame2, columns=columns, show='headings', height=9)
+# define headings
+tree.column("# 1", anchor=CENTER, stretch=NO, width=100)
+tree.column("# 2", anchor=CENTER, stretch=NO, width=275)
+tree.column("# 3", anchor=CENTER, stretch=NO, width=75)
+
+tree.heading('keyword', text='Keyword',)
+tree.heading('url', text='URL | Name')
+tree.heading('Type', text='Type')
+# generate sample data
+# contacts = []
+
+
+def insertDataToTree(data):
+    for i in tree.get_children():
+        tree.delete(i)
+    for n in data:
+        if n[2] == '1':
+            tree.insert('', 'end', values=(n[0], n[1], 'web'))
+        else:
+            tree.insert('', 'end', values=(n[0], n[1], 'app'))
+
+
+insertDataToTree(data)
+
+
+def item_selected(event):
+    for selected_item in tree.selection():
+        item = tree.item(selected_item)
+        record = item['values']
+        print(record)
+        # show a message
+        # showinfo(title='Information', message=','.join(record))
+
+
+tree.bind('<<TreeviewSelect>>', item_selected)
+
+tree.grid(row=0, column=0, sticky='nsew')
+
+# add a scrollbar
+scrollbar = Scrollbar(frame2, orient=VERTICAL, command=tree.yview)
+tree.configure(yscroll=scrollbar.set)
+scrollbar.grid(row=0, column=1, sticky='ns')
+
+# function for delete
+
+
+def delete():
+    for selected_item in tree.selection():
+        item = tree.item(selected_item)
+        record = item['values']
+        # tree.delete(selected_item)
+        for i in data:
+            if i[1] == record[1] and i[0] == record[0]:
+                data.remove(i)
+    insertDataToTree(data)
+    print(data)
+
+
+# the button for delete
+delete_button = Button(frame2,
+                       text="Delete", command=delete).place(x=300,
+                                                            y=220)
+
+
+def talk(event=None):
+    print("Listening...")
+    rotbot_ear = speech_recognition.Recognizer()
+    robot_mouth = pyttsx3.init()
+    with speech_recognition.Microphone() as mic:
+        #print("Robot : I'm Listening")
+        audio = rotbot_ear.listen(mic)
+    try:
+        you = rotbot_ear.recognize_google(audio, language="en")
+    except:
+        you = 'None'
+    if you != 'None':
+        text.delete(1.0, END)
+        text.insert('1.0', "You : " + you)
+        for i in data:
+            you = you.lower()
+            text.insert('1.0', "")
+            if i[0] == you and i[2] == '1':
+                webbrowser.open(i[1])
+            if i[0] == you and i[2] == '2':
+                nameApp = "start {}:".format(i[1])
+                os.system(nameApp)
+    else:
+        #text.delete(1.0, END)
+        #text.insert('1.0', "Say again")
+        showinfo("Error", "I can't understand what you said")
+    robot_mouth.runAndWait()
+
+
+window.bind('<Control-q>', talk)
+window.mainloop()
+# delete file
+# os.remove("data.csv")
+# write data to file
+with open('data.csv', 'w', newline='') as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerows(data)
